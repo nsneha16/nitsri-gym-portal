@@ -1,0 +1,8 @@
+# Backend
+backend/node_modules
+backend/.env
+
+# Frontend
+gymfrontend/node_modules
+gymfrontend/.env
+gymfrontend/.env.local
