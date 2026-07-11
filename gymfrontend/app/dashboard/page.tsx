@@ -26,6 +26,7 @@ interface Slot {
   days: string
   capacity: number
   enrolled_count: number
+  is_active?: boolean 
 }
 
 interface ActiveEnrollment {
