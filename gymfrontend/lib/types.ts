@@ -29,5 +29,5 @@ export interface GymSlot {
   days: string            // "Mon,Tue,Wed"
   capacity: number
   enrolled_count: number
-  is_active: boolean
+  is_active?: boolean
 }
