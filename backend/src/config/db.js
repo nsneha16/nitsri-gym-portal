@@ -9,6 +9,22 @@ const db = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,   // connection pool, not single connection
 });
+  
+
+// // Pool status — BAHAR rakho, catch ke andar nahi
+// setInterval(() => {
+//   const pool = db.pool
+//   console.log(`
+//   ━━━━━━━━━━━━━━━━━━━━━━━━━
+//   🏊 Pool Status:
+//   Total     : ${pool._allConnections.length}
+//   Active    : ${pool._acquiringConnections.length}
+//   Free      : ${pool._freeConnections.length}
+//   Waiting   : ${pool._connectionQueue.length}
+//   ━━━━━━━━━━━━━━━━━━━━━━━━━
+//   `)
+// }, 5000)
+
 (async () => {
   try {
     const connection = await db.getConnection();
@@ -16,8 +32,8 @@ const db = mysql.createPool({
     connection.release();
   } catch (err) {
     console.log("DB connection failed:", err.message);
-    console.log(process.env.DB_USER);
-console.log(process.env.DB_PASSWORD);
+    // console.log(process.env.DB_USER);
+    // console.log(process.env.DB_PASSWORD);
   }
 })();
 

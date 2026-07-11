@@ -36,8 +36,8 @@ interface Enrollment {
   days: string
   capacity: number
   enrolled_count: number
-  enrolled_at: string
-  expires_at: string
+  enrolled_date: string
+  expiry_date: string
   status: string
 }
 
@@ -90,7 +90,7 @@ export default function EnrollmentPage() {
 
   const calculateDaysLeft = () => {
     if (!enrollment) return 0
-    const expiry = new Date(enrollment.expires_at)
+    const expiry = new Date(enrollment.expiry_date)
     const today = new Date()
     const diffTime = expiry.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -138,22 +138,29 @@ export default function EnrollmentPage() {
           <div className="space-y-6">
             {/* Status banner */}
             <div className={`flex items-center gap-3 rounded-lg border p-4 ${
-              enrollment.status === 'active' 
+              enrollment.status === 'confirmed' 
                 ? 'border-primary/50 bg-primary/10' 
                 : 'border-destructive/50 bg-destructive/10'
             }`}>
-              {enrollment.status === 'active' ? (
+              {enrollment.status === 'confirmed' ? (
                 <CheckCircle2 className="h-5 w-5 text-primary" />
               ) : (
                 <XCircle className="h-5 w-5 text-destructive" />
               )}
               <div>
                 <p className={`font-medium ${
-                  enrollment.status === 'active' ? 'text-primary' : 'text-destructive'
+                  enrollment.status === 'confirmed' ? 'text-primary' : 'text-destructive'
                 }`}>
-                  {enrollment.status === 'active' ? 'Active Enrollment' : 'Enrollment Expired'}
+                  {enrollment.status === 'confirmed' ? 'Active Enrollment' : 'Enrollment Expired'}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                {/* <p className="text-sm text-muted-foreground">
+                  {daysLeft > 0 ? `${daysLeft} days remaining` : 'Please renew your enrollment'}
+                </p> */}
+                <p className={`text-sm font-medium ${
+                  daysLeft <= 7 ? 'text-destructive' : 
+                  daysLeft <= 15 ? 'text-yellow-400' : 
+                  'text-green-400'
+                  }`}>
                   {daysLeft > 0 ? `${daysLeft} days remaining` : 'Please renew your enrollment'}
                 </p>
               </div>
@@ -200,7 +207,7 @@ export default function EnrollmentPage() {
                     <div>
                       <p className="text-sm text-muted-foreground">Enrolled On</p>
                       <p className="font-medium text-foreground">
-                        {new Date(enrollment.enrolled_at).toLocaleDateString('en-IN', {
+                        {new Date(enrollment.enrolled_date).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric'
@@ -214,7 +221,7 @@ export default function EnrollmentPage() {
                     <div>
                       <p className="text-sm text-muted-foreground">Expires On</p>
                       <p className={`font-medium ${daysLeft <= 7 ? 'text-destructive' : 'text-foreground'}`}>
-                        {new Date(enrollment.expires_at).toLocaleDateString('en-IN', {
+                        {new Date(enrollment.expiry_date).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric'

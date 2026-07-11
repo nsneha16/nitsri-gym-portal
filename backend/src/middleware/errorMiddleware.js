@@ -10,7 +10,7 @@ const errorHandler = (err, req, res, next) => {
 
   // MySQL errors — meaningful message do
   if (err.code === "ER_DUP_ENTRY") {
-    return sendError(res, 409, "Already exists — duplicate entry")
+    return sendError(res, 409, "You are already enrolled in this slot")
   }
 
   if (err.code === "ER_NO_REFERENCED_ROW_2") {

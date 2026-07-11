@@ -62,7 +62,7 @@ exports.login = async (req, res, next) => {
     const token = generateToken(user)
 
     return sendSuccess(res, 200, "Login successful", {
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role,},
       token
     })
 

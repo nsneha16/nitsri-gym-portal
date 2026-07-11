@@ -20,6 +20,8 @@ app.get("/health", (req, res) => res.json({
 app.use("/api/auth", require("./routes/authRoutes"))
 app.use("/api/slots", require("./routes/slotRoutes"))
 app.use("/api/enrollments", require("./routes/enrollmentRoutes"))
+app.use("/api/admin", require("./routes/adminRoutes"))
+app.use("/api/profile", require("./routes/profileRoutes"))
 
 app.use(errorHandler)
 app.use(cors({

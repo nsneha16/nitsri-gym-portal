@@ -4,16 +4,19 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { SlotCard } from '@/components/slot-card'
-import { getSlots, enrollInSlot } from '@/lib/api'
+import { getSlots, enrollInSlot, getMyEnrollments, cancelEnrollment, getProfile } from '@/lib/api'
 import { Search, Filter } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface Slot {
   id: number
@@ -25,6 +28,11 @@ interface Slot {
   enrolled_count: number
 }
 
+interface ActiveEnrollment {
+  id: number
+  slot_name: string
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [slots, setSlots] = useState<Slot[]>([])
@@ -33,61 +41,116 @@ export default function DashboardPage() {
   const [filterAvailability, setFilterAvailability] = useState<'all' | 'available' | 'full'>('all')
   const [enrollingSlot, setEnrollingSlot] = useState<string | null>(null)
 
+  // Active enrollment state
+  const [activeEnrollment, setActiveEnrollment] = useState<ActiveEnrollment | null>(null)
+
+  // Warning dialog state
+  const [showWarning, setShowWarning] = useState(false)
+  const [pendingSlotId, setPendingSlotId] = useState<string | null>(null)
+
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) {
+  const token = localStorage.getItem("token")
+  if (!token) { router.push("/"); return }
+
+  const init = async () => {
+    try {
+      // Profile check
+      const profileData = await getProfile()
+      
+      if (!profileData.success) {
+        router.push("/")
+        return
+      }
+
+      if (!profileData.data.user.profile_complete) {
+        router.push("/profile")
+        return
+      }
+
+      // Profile complete hai — slots aur enrollment fetch karo
+      fetchSlots()
+      fetchActiveEnrollment()
+
+    } catch {
       router.push("/")
+    }
+  }
+
+  init()
+}, [router])
+
+  const fetchSlots = async () => {
+    try {
+      const data = await getSlots()
+      setSlots(data.slots || [])
+    } catch {
+      console.error("Failed to fetch slots")
+    }
+    setLoading(false)
+  }
+
+  // Active enrollment fetch karo
+  const fetchActiveEnrollment = async () => {
+    try {
+      const data = await getMyEnrollments()
+      if (data.success && data.data.enrollments?.length > 0) {
+        setActiveEnrollment(data.data.enrollments[0])
+      }
+    } catch {
+      console.error("Failed to fetch enrollment")
+    }
+  }
+
+  // Enroll button click
+  const handleEnroll = async (slotId: string) => {
+    // Active enrollment hai? Warning dikhao
+    if (activeEnrollment) {
+      setPendingSlotId(slotId)
+      setShowWarning(true)
       return
     }
-    fetchSlots()
-  }, [router])
-
-  // const fetchSlots = async () => {
-  //   try {
-  //     const data = await getSlots()
-  //     if (data.success) {
-  //       setSlots(data.data.slots || [])
-  //     }
-  //   } catch {
-  //     console.error("Failed to fetch slots")
-  //   }
-  //   setLoading(false)
-  // }
-  const fetchSlots = async () => {
-  try {
-    const data = await getSlots()
-    console.log("API Response:", data)  // 👈 yeh add karo
-    setSlots(data.slots || [])
-    
-  } catch {
-    console.error("Failed to fetch slots")
+    // Nahi hai — seedha enroll karo
+    await doEnroll(slotId)
   }
-  setLoading(false)
-}
 
-  const handleEnroll = async (slotId: string) => {
+  // Warning pe "Yes" click — cancel old, enroll new
+  const handleConfirmSwitch = async () => {
+    if (!activeEnrollment || !pendingSlotId) return
+    setShowWarning(false)
+
+    try {
+      // Pehle cancel karo
+      await cancelEnrollment(activeEnrollment.id)
+      // Phir naya enroll karo
+      await doEnroll(pendingSlotId)
+    } catch {
+      alert("Something went wrong. Please try again.")
+    }
+
+    setPendingSlotId(null)
+  }
+
+  // Actual enroll function
+  const doEnroll = async (slotId: string) => {
     setEnrollingSlot(slotId)
-    
     try {
       const data = await enrollInSlot(Number(slotId))
-
       if (data.success) {
         alert('Enrollment successful!')
         fetchSlots()
+        fetchActiveEnrollment()
       } else {
         alert(data.message || "Enrollment failed")
       }
     } catch {
       alert("Network error. Please try again.")
     }
-    
     setEnrollingSlot(null)
   }
 
   const filteredSlots = slots.filter((slot) => {
     const matchesSearch = slot.name.toLowerCase().includes(searchQuery.toLowerCase())
     const available = slot.capacity - slot.enrolled_count
-
     if (filterAvailability === 'available') return matchesSearch && available > 0
     if (filterAvailability === 'full') return matchesSearch && available === 0
     return matchesSearch
@@ -111,7 +174,39 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
+      {/* Warning Dialog */}
+      <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Already Enrolled!</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are currently enrolled in <strong>{activeEnrollment?.slot_name}</strong>.
+              Do you want to cancel that and enroll in this new slot?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingSlotId(null)}>
+              Keep Current Slot
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSwitch}>
+              Yes, Switch Slot
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+
+        {/* Active enrollment banner */}
+        {activeEnrollment && (
+          <div className="mb-6 rounded-lg border border-primary/50 bg-primary/10 px-4 py-3">
+            <p className="text-sm text-primary font-medium">
+              ✅ Active slot: <strong>{activeEnrollment.slot_name}</strong> — 
+              <a href="/enrollment" className="underline ml-1">View details</a>
+            </p>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
             Available Gym Slots
@@ -170,6 +265,7 @@ export default function DashboardPage() {
                 key={slot.id}
                 slot={slot}
                 onEnroll={handleEnroll}
+                isEnrolling={enrollingSlot === String(slot.id)}
               />
             ))}
           </div>

@@ -63,3 +63,41 @@ export const cancelEnrollment = async (id: number) => {
   })
   return res.json()
 }
+
+export const getProfile = async () => {
+  const res = await fetch(`${BASE_URL}/api/profile`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}
+
+export const updateProfile = async (data: {
+  name: string
+  department: string
+  year: number
+  batch: string
+}) => {
+  const res = await fetch(`${BASE_URL}/api/profile`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(data)
+  })
+  return res.json()
+}
+
+export const getAdminDashboard = async () => {
+  const res = await fetch(`${BASE_URL}/api/admin/dashboard`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}
+
+export const getAdminEnrollments = async () => {
+  const res = await fetch(`${BASE_URL}/api/admin/enrollments`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}

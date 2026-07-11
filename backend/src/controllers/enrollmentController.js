@@ -51,7 +51,7 @@ exports.enroll = async (req, res, next) => {
 
     // Enrollment insert karo
     await conn.query(
-      "INSERT INTO enrollments (user_id, slot_id, status, enrolled_date, expiry_date) VALUES (?, ?, 'confirmed', ?, ?)",
+      "INSERT INTO enrollments (user_id, slot_id, status, enrolled_date) VALUES (?, ?, 'confirmed', ?)",
       [user_id, slot_id, enrolled_date, expiry_date]
     )
 
@@ -72,6 +72,7 @@ exports.enroll = async (req, res, next) => {
 
   } catch (err) {
     // Kuch bhi galat hua — rollback karo
+    console.error("Enrollment error details:", err) 
     await conn.rollback()
     next(err)
 
