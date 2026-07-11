@@ -22,7 +22,7 @@ export interface User {
   name: string
 }
 export interface GymSlot {
-  id: string
+  id: number
   name: string
   start_time: string      // "06:00:00"
   end_time: string        // "07:40:00"
