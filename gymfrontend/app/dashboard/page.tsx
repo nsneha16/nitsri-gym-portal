@@ -266,7 +266,7 @@ export default function DashboardPage() {
                 key={slot.id}
                 slot={slot}
                 onEnroll={handleEnroll}
-                isEnrolling={enrollingSlot === String(slot.id)}
+                // isEnrolling={enrollingSlot === String(slot.id)}
               />
             ))}
           </div>
