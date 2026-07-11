@@ -9,25 +9,11 @@ const db = mysql.createPool({
   port: process.env.DB_PORT,
   waitForConnections: true,
   connectionLimit: 10,   // connection pool, not single connection
-  ssl: {                             // 👈 add karo
-    rejectUnauthorized: true
+  ssl: {                             
+    rejectUnauthorized: false 
   }
 });
-  
 
-// // Pool status — BAHAR rakho, catch ke andar nahi
-// setInterval(() => {
-//   const pool = db.pool
-//   console.log(`
-//   ━━━━━━━━━━━━━━━━━━━━━━━━━
-//   🏊 Pool Status:
-//   Total     : ${pool._allConnections.length}
-//   Active    : ${pool._acquiringConnections.length}
-//   Free      : ${pool._freeConnections.length}
-//   Waiting   : ${pool._connectionQueue.length}
-//   ━━━━━━━━━━━━━━━━━━━━━━━━━
-//   `)
-// }, 5000)
 
 (async () => {
   try {
