@@ -15,5 +15,6 @@ router.get("/dashboard", authMiddleware, isAdmin, adminController.getDashboard)
 router.get("/enrollments", authMiddleware, isAdmin, adminController.getAllEnrollments)
 router.get("/students", authMiddleware, isAdmin, adminController.getAllStudents)
 router.patch("/slots/:id/toggle", authMiddleware, isAdmin, adminController.toggleSlot)
+router.get("/students/:id/history", authMiddleware, isAdmin, adminController.getStudentHistory)
 
 module.exports = router

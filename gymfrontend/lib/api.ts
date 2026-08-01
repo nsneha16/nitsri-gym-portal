@@ -31,6 +31,39 @@ export const getSlots = async () => {
   })
   return res.json()
 }
+export const createSlot = async (data: {
+  name: string
+  start_time: string
+  end_time: string
+  days: string
+  capacity: number
+}) => {
+  const res = await fetch(`${BASE_URL}/api/slots`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(data)
+  })
+  return res.json()
+}
+
+export const updateSlot = async (slotId: number, data: {
+  capacity?: number
+  is_active?: boolean
+}) => {
+  const res = await fetch(`${BASE_URL}/api/slots/${slotId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(data)
+  })
+  return res.json()
+}
+
 
 // Enrollment APIs
 export const enrollInSlot = async (slot_id: number) => {
@@ -53,6 +86,12 @@ export const getMyEnrollments = async () => {
   })
   return res.json()
 }
+export const getMyHistory = async () => {
+  const res = await fetch(`${BASE_URL}/api/enrollments/history`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}
 
 export const cancelEnrollment = async (id: number) => {
   const res = await fetch(`${BASE_URL}/api/enrollments/${id}`, {
@@ -63,7 +102,7 @@ export const cancelEnrollment = async (id: number) => {
   })
   return res.json()
 }
-
+//profile APIs
 export const getProfile = async () => {
   const res = await fetch(`${BASE_URL}/api/profile`, {
     headers: { Authorization: `Bearer ${getToken()}` }
@@ -87,7 +126,7 @@ export const updateProfile = async (data: {
   })
   return res.json()
 }
-
+//admin APIs
 export const getAdminDashboard = async () => {
   const res = await fetch(`${BASE_URL}/api/admin/dashboard`, {
     headers: { Authorization: `Bearer ${getToken()}` }
@@ -97,6 +136,28 @@ export const getAdminDashboard = async () => {
 
 export const getAdminEnrollments = async () => {
   const res = await fetch(`${BASE_URL}/api/admin/enrollments`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}
+
+export const getAdminStudents = async () => {
+  const res = await fetch(`${BASE_URL}/api/admin/students`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}
+
+export const toggleSlotStatus = async (slotId: number) => {
+  const res = await fetch(`${BASE_URL}/api/admin/slots/${slotId}/toggle`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}
+
+export const getStudentHistory = async (studentId: number) => {
+  const res = await fetch(`${BASE_URL}/api/admin/students/${studentId}/history`, {
     headers: { Authorization: `Bearer ${getToken()}` }
   })
   return res.json()

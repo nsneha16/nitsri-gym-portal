@@ -16,8 +16,8 @@ exports.enroll = async (req, res, next) => {
     // Transaction shuru karo
     await conn.beginTransaction()
 
-    // 🔴 Yahi hai race condition fix — FOR UPDATE
-    // Ek waqt mein sirf ek request yeh row lock kar sakti hai
+    // 🔴  race condition fix — FOR UPDATE
+    // lock one requesst at a time
     const [slots] = await conn.query(
       "SELECT * FROM slots WHERE id = ? AND is_active = 1 FOR UPDATE",
       [slot_id]
@@ -29,12 +29,12 @@ exports.enroll = async (req, res, next) => {
 
     const slot = slots[0]
 
-    // Seat available hai?
+    // Seat available ?
     if (slot.enrolled_count >= slot.capacity) {
       throw new AppError("Slot is full", 409)
     }
 
-    // Student pehle se enrolled toh nahi?
+    // Student already enrolled ?
     const [existing] = await conn.query(
       "SELECT id FROM enrollments WHERE user_id = ? AND slot_id = ? AND status != 'cancelled'",
       [user_id, slot_id]
@@ -49,19 +49,19 @@ exports.enroll = async (req, res, next) => {
     const expiry_date = new Date()
     expiry_date.setMonth(expiry_date.getMonth() + 1)  // 1 month validity
 
-    // Enrollment insert karo
+    // Enrollment insert 
     await conn.query(
       "INSERT INTO enrollments (user_id, slot_id, status, enrolled_date) VALUES (?, ?, 'confirmed', ?)",
       [user_id, slot_id, enrolled_date, expiry_date]
     )
 
-    // Slot ka count badhao
+    // Slot ka count inc
     await conn.query(
       "UPDATE slots SET enrolled_count = enrolled_count + 1 WHERE id = ?",
       [slot_id]
     )
 
-    // Sab theek — commit karo
+    // all ok — commit karo
     await conn.commit()
 
     return sendSuccess(res, 201, "Enrollment successful", {
@@ -71,7 +71,7 @@ exports.enroll = async (req, res, next) => {
     })
 
   } catch (err) {
-    // Kuch bhi galat hua — rollback karo
+    // if wrong— rollback karo
     console.error("Enrollment error details:", err) 
     await conn.rollback()
     next(err)
@@ -146,5 +146,33 @@ exports.cancelEnrollment = async (req, res, next) => {
 
   } finally {
     conn.release()
+  }
+}
+
+exports.getMyHistory = async (req, res, next) => {
+  try {
+    const user_id = req.user.id
+
+    const [enrollments] = await db.query(
+      `SELECT 
+        e.id,
+        e.status,
+        e.enrolled_date,
+        e.expiry_date,
+        s.name as slot_name,
+        s.start_time,
+        s.end_time,
+        s.days
+       FROM enrollments e
+       JOIN slots s ON e.slot_id = s.id
+       WHERE e.user_id = ?
+       ORDER BY e.created_at DESC`,
+      [user_id]
+    )
+
+    return sendSuccess(res, 200, "Enrollment history fetched", { enrollments })
+
+  } catch (err) {
+    next(err)
   }
 }

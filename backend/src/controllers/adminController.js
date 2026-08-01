@@ -33,7 +33,7 @@ exports.getAllEnrollments = async (req, res, next) => {
         e.id,
         u.name as student_name,
         u.email,
-        u.college_id,
+      
         s.name as slot_name,
         s.start_time,
         s.end_time,
@@ -60,7 +60,7 @@ exports.getAllStudents = async (req, res, next) => {
         u.id,
         u.name,
         u.email,
-        u.college_id,
+
         u.department,
         u.year,
         u.is_active,
@@ -97,6 +97,44 @@ exports.toggleSlot = async (req, res, next) => {
     )
 
     return sendSuccess(res, 200, `Slot ${slot.is_active ? 'deactivated' : 'activated'}`)
+  } catch (err) {
+    next(err)
+  }
+}
+
+exports.getStudentHistory = async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const [users] = await db.query(
+      "SELECT id, name, email, department, year, batch FROM users WHERE id = ?",
+      [id]
+    )
+
+    if (users.length === 0) throw new AppError("Student not found", 404)
+
+    const [enrollments] = await db.query(
+      `SELECT 
+        e.id,
+        e.status,
+        e.enrolled_date,
+        e.expiry_date,
+        s.name as slot_name,
+        s.start_time,
+        s.end_time,
+        s.days
+       FROM enrollments e
+       JOIN slots s ON e.slot_id = s.id
+       WHERE e.user_id = ?
+       ORDER BY e.created_at DESC`,
+      [id]
+    )
+
+    return sendSuccess(res, 200, "Student history fetched", {
+      student: users[0],
+      enrollments
+    })
+
   } catch (err) {
     next(err)
   }

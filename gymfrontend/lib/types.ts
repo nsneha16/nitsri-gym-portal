@@ -1,13 +1,3 @@
-// export interface GymSlot {
-//   id: string
-//   name: string
-//   time: string
-//   days: string[]
-//   availableSeats: number
-//   totalCapacity: number
-//   instructor?: string
-// }
-
 export interface Enrollment {
   id: string
   slot: GymSlot
@@ -30,4 +20,38 @@ export interface GymSlot {
   capacity: number
   enrolled_count: number
   is_active?: boolean
+}
+// History — student's own enrollment history
+export interface EnrollmentHistoryItem {
+  id: number
+  status: 'confirmed' | 'cancelled'
+  enrolled_date: string
+  expiry_date: string
+  slot_name: string
+  start_time: string
+  end_time: string
+  days: string
+}
+
+// Admin — student list
+export interface StudentListItem {
+  id: number
+  name: string
+  email: string
+  department: string
+  year: number
+  is_active: boolean
+  created_at: string
+  enrollment_status: string | null
+  slot_name: string | null
+}
+
+// Admin — single student detail (for history page)
+export interface StudentDetail {
+  id: number
+  name: string
+  email: string
+  department: string
+  year: number
+  batch: string
 }

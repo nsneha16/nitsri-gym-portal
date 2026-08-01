@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Dumbbell, LogOut, LayoutDashboard, CalendarCheck, User } from 'lucide-react'
+import { Dumbbell, LogOut, LayoutDashboard, CalendarCheck, User,Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function Header() {
@@ -11,7 +11,8 @@ export function Header() {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/enrollment', label: 'My Enrollment', icon: CalendarCheck },
-    { href: '/profile', label: 'Profile', icon: User }
+    { href: '/profile', label: 'Profile', icon: User },
+    { href: '/history', label: 'History', icon: Clock }
   ]
 
   return (

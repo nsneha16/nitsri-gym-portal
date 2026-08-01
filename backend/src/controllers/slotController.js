@@ -1,6 +1,6 @@
 const db = require("../config/db")
 
-// GET /api/slots — sabhi active slots
+// GET /api/slots — all active slots
 exports.getAllSlots = async (req, res) => {
   try {
     const [slots] = await db.query(
@@ -14,7 +14,7 @@ exports.getAllSlots = async (req, res) => {
   }
 }
 
-// POST /api/slots — naya slot banao (admin only)
+// POST /api/slots — (admin only)
 exports.createSlot = async (req, res) => {
   try {
     const { name, start_time, end_time, days, capacity } = req.body
