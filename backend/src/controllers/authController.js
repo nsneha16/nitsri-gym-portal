@@ -1,7 +1,10 @@
 const db = require("../config/db")
+const bcrypt = require("bcrypt")
 const generateToken = require("../utils/generateToken")
 const AppError = require("../utils/AppError")
 const { sendSuccess, sendError } = require("../utils/apiResponse")
+
+const SALT_ROUNDS = 10
 
 exports.signup = async (req, res, next) => {  // 👈 next add kiya
   try {
@@ -23,16 +26,18 @@ exports.signup = async (req, res, next) => {  // 👈 next add kiya
       throw new AppError("User already exists", 409)
     }
 
-    // TODO: hash password with bcrypt before production
+    // TODO: hash password with bcrypt before production-- done 
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
+    
     await db.query(
       "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, password]
+      [name, email, hashedPassword]
     )
 
     return sendSuccess(res, 201, "Signup successful")
 
   } catch (err) {
-    next(err)  // 👈 error middleware ko bhejo, yahan handle mat karo
+    next(err)  
   }
 }
 
@@ -54,8 +59,9 @@ exports.login = async (req, res, next) => {
 
     const user = users[0]
 
-    // TODO: replace with bcrypt.compare before production
-    if (user.password !== password) {
+    // TODO: replace with bcrypt.compare before production--done
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
       throw new AppError("Incorrect password", 401)
     }
 
