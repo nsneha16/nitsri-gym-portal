@@ -134,15 +134,21 @@ export const getAdminDashboard = async () => {
   return res.json()
 }
 
-export const getAdminEnrollments = async () => {
-  const res = await fetch(`${BASE_URL}/api/admin/enrollments`, {
+export const getAdminEnrollments = async (page: number = 1, search: string = "") => {
+  const params = new URLSearchParams({ page: String(page), limit: "10" })
+  if (search) params.append("search", search)
+
+  const res = await fetch(`${BASE_URL}/api/admin/enrollments?${params}`, {
     headers: { Authorization: `Bearer ${getToken()}` }
   })
   return res.json()
 }
 
-export const getAdminStudents = async () => {
-  const res = await fetch(`${BASE_URL}/api/admin/students`, {
+export const getAdminStudents = async (page: number = 1, search: string = "") => {
+  const params = new URLSearchParams({ page: String(page), limit: "10" })
+  if (search) params.append("search", search)
+
+  const res = await fetch(`${BASE_URL}/api/admin/students?${params}`, {
     headers: { Authorization: `Bearer ${getToken()}` }
   })
   return res.json()
@@ -158,6 +164,15 @@ export const toggleSlotStatus = async (slotId: number) => {
 
 export const getStudentHistory = async (studentId: number) => {
   const res = await fetch(`${BASE_URL}/api/admin/students/${studentId}/history`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+  return res.json()
+}
+
+export const getAdminSlots = async (page: number = 1) => {
+  const params = new URLSearchParams({ page: String(page), limit: "10" })
+
+  const res = await fetch(`${BASE_URL}/api/admin/slots?${params}`, {
     headers: { Authorization: `Bearer ${getToken()}` }
   })
   return res.json()

@@ -25,15 +25,33 @@ exports.getDashboard = async (req, res, next) => {
   }
 }
 
-// All enrollments — slotwise
+// All enrollments — paginated + searchable (by student name or slot name)
 exports.getAllEnrollments = async (req, res, next) => {
   try {
-    const [enrollments] = await db.query(`
-      SELECT 
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const offset = (page - 1) * limit
+    const search = req.query.search || ""
+
+    const searchClause = search
+      ? `AND (u.name LIKE ? OR s.name LIKE ?)`
+      : ""
+    const searchParams = search ? [`%${search}%`, `%${search}%`] : []
+
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) as total
+       FROM enrollments e
+       JOIN users u ON e.user_id = u.id
+       JOIN slots s ON e.slot_id = s.id
+       WHERE 1=1 ${searchClause}`,
+      searchParams
+    )
+
+    const [enrollments] = await db.query(
+      `SELECT 
         e.id,
         u.name as student_name,
         u.email,
-      
         s.name as slot_name,
         s.start_time,
         s.end_time,
@@ -43,24 +61,43 @@ exports.getAllEnrollments = async (req, res, next) => {
       FROM enrollments e
       JOIN users u ON e.user_id = u.id
       JOIN slots s ON e.slot_id = s.id
+      WHERE 1=1 ${searchClause}
       ORDER BY e.created_at DESC
-    `)
+      LIMIT ? OFFSET ?`,
+      [...searchParams, limit, offset]
+    )
 
-    return sendSuccess(res, 200, "All enrollments", { enrollments })
+    return sendSuccess(res, 200, "All enrollments", {
+      enrollments,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    })
   } catch (err) {
     next(err)
   }
 }
 
-// All students
+// All students — paginated + searchable (by name)
 exports.getAllStudents = async (req, res, next) => {
   try {
-    const [students] = await db.query(`
-      SELECT 
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const offset = (page - 1) * limit
+    const search = req.query.search || ""
+
+    const searchClause = search ? `AND u.name LIKE ?` : ""
+    const searchParams = search ? [`%${search}%`] : []
+
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) as total FROM users u
+       WHERE u.role = 'student' ${searchClause}`,
+      searchParams
+    )
+
+    const [students] = await db.query(
+      `SELECT 
         u.id,
         u.name,
         u.email,
-
         u.department,
         u.year,
         u.is_active,
@@ -70,11 +107,44 @@ exports.getAllStudents = async (req, res, next) => {
       FROM users u
       LEFT JOIN enrollments e ON u.id = e.user_id AND e.status = 'confirmed'
       LEFT JOIN slots s ON e.slot_id = s.id
-      WHERE u.role = 'student'
+      WHERE u.role = 'student' ${searchClause}
       ORDER BY u.created_at DESC
-    `)
+      LIMIT ? OFFSET ?`,
+      [...searchParams, limit, offset]
+    )
 
-    return sendSuccess(res, 200, "All students", { students })
+    return sendSuccess(res, 200, "All students", {
+      students,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// All slots for admin — active + inactive both, paginated
+exports.getAllSlots = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const offset = (page - 1) * limit
+
+    const [[{ total }]] = await db.query(
+      "SELECT COUNT(*) as total FROM slots"
+    )
+
+    const [slots] = await db.query(
+      `SELECT id, name, start_time, end_time, days, capacity, enrolled_count, is_active, created_at
+       FROM slots
+       ORDER BY start_time
+       LIMIT ? OFFSET ?`,
+      [limit, offset]
+    )
+
+    return sendSuccess(res, 200, "All slots", {
+      slots,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    })
   } catch (err) {
     next(err)
   }
