@@ -50,9 +50,11 @@ At NIT Srinagar, gym management was **completely manual**:
 | Feature | Description |
 |---|---|
 | 🔒 Role-based Access | Separate admin login, JWT role check |
-| 📈 Dashboard | Total students, slots, active enrollments |
-| 📋 Enrollment Management | All students with slot and date details |
-| 🕐 Slot Overview | Real-time enrolled vs capacity |
+| 📈 Dashboard | Total students, slots, active enrollments — clickable stat cards |
+| 👥 Student Management | Paginated, searchable list of all students with enrollment status |
+| 📋 Enrollment Management | Paginated, searchable across student/slot names |
+| 🕐 Slot Management | Create new slots, toggle active/inactive, view capacity |
+| 🕓 Student History | Full enrollment history per student, click-through from list |
 
 ---
 
@@ -71,31 +73,25 @@ Hosting          →  Vercel (frontend) + Render (backend)
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   CLIENT LAYER                  │
-│         Student App        Admin Dashboard      │
-│         (Next.js)          (Next.js)            │
-└──────────────────────┬──────────────────────────┘
-                       │ HTTPS + JWT Token
-┌──────────────────────▼──────────────────────────┐
-│                   API LAYER                     │
-│              Express.js (Render)                │
-│   Rate Limiting · JWT Middleware · Error Handler │
-└──────────────────────┬──────────────────────────┘
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-┌───────▼──────┐ ┌─────▼─────┐ ┌────▼──────────┐
-│ /api/auth    │ │ /api/slots │ │/api/enrollments│
-│ /api/profile │ │ /api/admin │ │/api/payments   │
-└───────┬──────┘ └─────┬─────┘ └────┬──────────┘
-        └──────────────┼─────────────┘
-                       │
-┌──────────────────────▼──────────────────────────┐
-│                  DATA LAYER                     │
-│          MySQL Connection Pool (×10)            │
-│          Aiven Cloud · Asia Pacific             │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                       CLIENT LAYER                       │
+│   Student App (Next.js)  +  Admin Dashboard (Next.js)    │
+└──────────────────────────────────────────────────────────┘
+                              │ HTTPS + JWT Token
+┌──────────────────────────────────────────────────────────┐
+│             API LAYER — Express.js (Render)              │
+│       JWT Middleware · Error Handling · Role Check       │
+└──────────────────────────────────────────────────────────┘
+                              │
+┌──────────────────────────────────────────────────────────┐
+│          /api/auth   /api/profile   /api/slots           │
+│              /api/admin   /api/enrollments                │
+└──────────────────────────────────────────────────────────┘
+                              │
+┌──────────────────────────────────────────────────────────┐
+│                        DATA LAYER                        │
+│        MySQL (Aiven Cloud) — Connection Pool ×10         │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -194,16 +190,35 @@ PATCH /api/slots/:id            Update slot (admin)
 POST   /api/enrollments         Enroll in a slot
 GET    /api/enrollments/my      My active enrollment
 DELETE /api/enrollments/:id     Cancel enrollment
+GET /api/enrollments/history My full enrollment history
 ```
 
 ### Admin
 ```
-GET   /api/admin/dashboard      Stats — students, slots, enrollments
-GET   /api/admin/enrollments    All enrollments with student info
-GET   /api/admin/students       All registered students
-PATCH /api/admin/slots/:id/toggle  Toggle slot active/inactive
+GET /api/admin/dashboard Stats — students, slots, enrollments
+GET /api/admin/students Paginated + searchable student list
+GET /api/admin/students/:id/history Individual student's enrollment history
+GET /api/admin/enrollments Paginated + searchable enrollment list
+GET /api/admin/slots Paginated slot list (active + inactive)
+PATCH /api/admin/slots/:id/toggle Toggle slot active/inactive
 ```
 
+### 5. Pagination & Search on Admin Queries
+
+Admin list endpoints (students, slots, enrollments) support server-side pagination and search rather than fetching entire tables — keeping response times consistent as data grows:
+
+```javascript
+const searchClause = search ? `AND (u.name LIKE ? OR s.name LIKE ?)` : ""
+const [enrollments] = await db.query(
+  `SELECT ... WHERE 1=1 ${searchClause}
+   ORDER BY e.created_at DESC LIMIT ? OFFSET ?`,
+  [...searchParams, limit, offset]
+)
+```
+
+### 6. Password Security
+
+Passwords are hashed using bcrypt (10 salt rounds) before storage — plaintext passwords are never persisted. Login compares the submitted password against the stored hash using `bcrypt.compare()`.
 ---
 
 ## 🗄️ Database Schema
@@ -313,44 +328,50 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 nitsri-gym-portal/
 │
 ├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   │   └── db.js              # MySQL connection pool
-│   │   ├── controllers/
-│   │   │   ├── authController.js
-│   │   │   ├── slotController.js
-│   │   │   ├── enrollmentController.js
-│   │   │   ├── profileController.js
-│   │   │   └── adminController.js
-│   │   ├── middleware/
-│   │   │   ├── authMiddleware.js  # JWT verification
-│   │   │   └── errorMiddleware.js # Central error handler
-│   │   ├── routes/
-│   │   │   ├── authRoutes.js
-│   │   │   ├── slotRoutes.js
-│   │   │   ├── enrollmentRoutes.js
-│   │   │   ├── profileRoutes.js
-│   │   │   └── adminRoutes.js
-│   │   └── utils/
-│   │       ├── apiResponse.js     # sendSuccess / sendError
-│   │       ├── AppError.js        # Custom error class
-│   │       └── generateToken.js   # JWT generation
-│   ├── app.js
-│   └── server.js
+│ ├── src/
+│ │ ├── config/
+│ │ │ └── db.js # MySQL connection pool
+│ │ ├── controllers/
+│ │ │ ├── authController.js
+│ │ │ ├── slotController.js
+│ │ │ ├── enrollmentController.js
+│ │ │ ├── profileController.js
+│ │ │ └── adminController.js
+│ │ ├── middleware/
+│ │ │ ├── authMiddleware.js # JWT verification
+│ │ │ └── errorMiddleware.js # Central error handler
+│ │ ├── routes/
+│ │ │ ├── authRoutes.js
+│ │ │ ├── slotRoutes.js
+│ │ │ ├── enrollmentRoutes.js
+│ │ │ ├── profileRoutes.js
+│ │ │ └── adminRoutes.js
+│ │ └── utils/
+│ │ ├── apiResponse.js # sendSuccess / sendError
+│ │ ├── AppError.js # Custom error class
+│ │ └── generateToken.js # JWT generation
+│ ├── app.js
+│ └── server.js
 │
 └── gymfrontend/
-    ├── app/
-    │   ├── page.tsx               # Landing + Login + Signup
-    │   ├── dashboard/page.tsx     # Slot browsing
-    │   ├── enrollment/page.tsx    # My enrollment
-    │   ├── profile/page.tsx       # Student profile
-    │   └── admin/page.tsx         # Admin dashboard
-    ├── components/
-    │   ├── header.tsx
-    │   └── slot-card.tsx
-    └── lib/
-        ├── api.ts                 # All API calls
-        └── types.ts               # TypeScript interfaces
+├── app/
+│ ├── page.tsx # Landing + Login + Signup
+│ ├── dashboard/page.tsx # Slot browsing
+│ ├── enrollment/page.tsx # My enrollment
+│ ├── history/page.tsx # My enrollment history
+│ ├── profile/page.tsx # Student profile
+│ └── admin/
+│ ├── page.tsx # Admin dashboard
+│ ├── students/page.tsx # All students (paginated, searchable)
+│ ├── students/[id]/page.tsx # Student detail + history
+│ ├── slots/page.tsx # All slots (create, toggle)
+│ └── enrollments/page.tsx # All enrollments (paginated, searchable)
+├── components/
+│ ├── header.tsx
+│ └── slot-card.tsx
+└── lib/
+├── api.ts # All API calls
+└── types.ts # TypeScript interfaces
 ```
 
 ---
