@@ -72,7 +72,7 @@ exports.enroll = async (req, res, next) => {
 
   } catch (err) {
     // if wrong— rollback karo
-    console.error("Enrollment error details:", err) 
+    // console.error("Enrollment error details:", err) 
     await conn.rollback()
     next(err)
 
