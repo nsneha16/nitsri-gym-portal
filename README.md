@@ -9,7 +9,7 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen?style=for-the-badge)](https://nitsri-gym-portal-jx2bo7l90-nsneha16s-projects.vercel.app/)
 [![Backend](https://img.shields.io/badge/Backend-Render-purple?style=for-the-badge)](https://nitsri-gym-backend.onrender.com)
 [![Database](https://img.shields.io/badge/Database-Aiven%20MySQL-blue?style=for-the-badge)](https://aiven.io)
-
+[![CI](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml/badge.svg)](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml)
 ---
 
 ![NITSRI Gym Portal](https://img.shields.io/badge/Status-Live%20%F0%9F%9F%A2-success?style=flat-square)
@@ -85,7 +85,7 @@ Hosting          →  Vercel (frontend) + Render (backend)
                               │
 ┌──────────────────────────────────────────────────────────┐
 │          /api/auth   /api/profile   /api/slots           │
-│              /api/admin   /api/enrollments                │
+│              /api/admin   /api/enrollments               │
 └──────────────────────────────────────────────────────────┘
                               │
 ┌──────────────────────────────────────────────────────────┐
