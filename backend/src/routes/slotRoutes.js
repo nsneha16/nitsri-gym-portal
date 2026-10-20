@@ -2,12 +2,13 @@ const express = require("express")
 const router = express.Router()
 const slotController = require("../controllers/slotController")
 const authMiddleware = require("../middleware/authMiddleware")
+const isAdmin = require("../middleware/isAdmin")
 
-// Student — sabhi slots dekho (login hona chahiye)
+// Student  should be loggged in
 router.get("/", authMiddleware, slotController.getAllSlots)
 
-// Admin — slot banao, update karo
-router.post("/", authMiddleware, slotController.createSlot)
-router.patch("/:id", authMiddleware, slotController.updateSlot)
+// Admin —  mek slot , update it
+router.post("/", authMiddleware, isAdmin, slotController.createSlot)
+router.patch("/:id", authMiddleware, isAdmin, slotController.updateSlot)
 
 module.exports = router
