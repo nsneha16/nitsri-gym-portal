@@ -84,7 +84,7 @@ exports.getMyEnrollment = async (req, res, next) => {
         s.name as slot_name, s.start_time, s.end_time, s.days
        FROM enrollments e
        JOIN slots s ON e.slot_id = s.id
-       WHERE e.user_id = ? AND e.status = 'confirmed'`,
+       WHERE e.user_id = ? AND e.status = 'confirmed' AND e.expiry_date >= CURDATE()`,
       [user_id]
     )
 
