@@ -44,7 +44,7 @@ describe("Concurrent Slot Booking", () => {
     await db.query(
       "DELETE FROM users WHERE email IN ('teststudent1@nitsri.ac.in', 'teststudent2@nitsri.ac.in')"
     )
-    await db.end()
+    // await db.end()     commentedd cuz next test nhi chl pata, kyuki connection bnd ho gya
   })
 
   it("should allow only ONE student to enroll when two request simultaneously for a 1-capacity slot", async () => {
@@ -79,3 +79,38 @@ describe("Concurrent Slot Booking", () => {
     expect(slot.enrolled_count).toBe(1)
   })
 })
+
+describe("One active slot rule", () => {
+  let tok, uid
+  const ids = []
+
+  beforeAll(async () => {
+    await db.query(`INSERT INTO users (name,email,password,role) VALUES ('One Rule','onerule@nitsri.ac.in','x','student') ON DUPLICATE KEY UPDATE name=name`)
+    const [[u]] = await db.query("SELECT id FROM users WHERE email='onerule@nitsri.ac.in'")
+    uid = u.id
+    tok = require("../src/utils/generateToken")({ id: uid, role: "student" })
+    for (let i = 0; i < 2; i++) {
+      const [r] = await db.query(`INSERT INTO slots (name,start_time,end_time,days,capacity,enrolled_count,is_active) VALUES ('T Slot','05:00:00','06:00:00','Mon',5,0,1)`)
+      ids.push(r.insertId)
+    }
+  })
+
+  afterAll(async () => {
+    await db.query("DELETE FROM enrollments WHERE user_id = ?", [uid])
+    await db.query("DELETE FROM slots WHERE id IN (?)", [ids])
+    await db.query("DELETE FROM users WHERE id = ?", [uid])
+  })
+
+  it("two parallel enrolls in different slots -> only one succeeds", async () => {
+    const rs = await Promise.all(ids.map(id =>
+      request(app).post("/api/enrollments").set("Authorization", `Bearer ${tok}`).send({ slot_id: id })))
+    expect(rs.map(r => r.statusCode).sort()).toEqual([201, 409])
+  })
+
+  it("second enroll after first -> 409", async () => {
+    const r = await request(app).post("/api/enrollments")
+      .set("Authorization", `Bearer ${tok}`).send({ slot_id: ids[0] })
+    expect(r.statusCode).toBe(409)
+  })
+})
+afterAll(async () => { await db.end() })

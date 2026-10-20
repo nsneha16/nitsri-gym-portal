@@ -3,7 +3,7 @@ const AppError = require("../utils/AppError")
 const { sendSuccess, sendError } = require("../utils/apiResponse")
 
 exports.enroll = async (req, res, next) => {
-  const conn = await db.getConnection()  // 👈 pool se connection lo
+  const conn = await db.getConnection()  // pool se connection lo
 
   try {
     const { slot_id } = req.body
@@ -13,11 +13,21 @@ exports.enroll = async (req, res, next) => {
       throw new AppError("Slot ID required", 400)
     }
 
-    // Transaction shuru karo
     await conn.beginTransaction()
 
-    // 🔴  race condition fix — FOR UPDATE
-    // lock one requesst at a time
+    // 1) user row lock — same user ki parallel requests serialize ho jayengi
+    await conn.query("SELECT id FROM users WHERE id = ? FOR UPDATE", [user_id])
+
+    // 2) pehle se active slot hai? (same ya koi aur slot — dono reject)
+    const [act] = await conn.query(
+      "SELECT id FROM enrollments WHERE user_id = ? AND status = 'confirmed' AND expiry_date >= CURDATE()",
+      [user_id]
+    )
+    if (act.length > 0) {
+      throw new AppError("You already have an active slot. Cancel it to switch", 409)
+    }
+
+    // 3) slot row lock — race condition fix (lock order: user -> slot, hamesha)
     const [slots] = await conn.query(
       "SELECT * FROM slots WHERE id = ? AND is_active = 1 FOR UPDATE",
       [slot_id]
@@ -29,39 +39,24 @@ exports.enroll = async (req, res, next) => {
 
     const slot = slots[0]
 
-    // Seat available ?
     if (slot.enrolled_count >= slot.capacity) {
       throw new AppError("Slot is full", 409)
     }
 
-    // Student already enrolled ?
-    const [existing] = await conn.query(
-      "SELECT id FROM enrollments WHERE user_id = ? AND slot_id = ? AND status != 'cancelled'",
-      [user_id, slot_id]
-    )
-
-    if (existing.length > 0) {
-      throw new AppError("Already enrolled in this slot", 409)
-    }
-
-    // Enrollment dates
     const enrolled_date = new Date()
     const expiry_date = new Date()
     expiry_date.setMonth(expiry_date.getMonth() + 1)  // 1 month validity
 
-    // Enrollment insert 
     await conn.query(
       "INSERT INTO enrollments (user_id, slot_id, status, enrolled_date) VALUES (?, ?, 'confirmed', ?)",
-      [user_id, slot_id, enrolled_date, expiry_date]
+      [user_id, slot_id, enrolled_date]
     )
 
-    // Slot ka count inc
     await conn.query(
       "UPDATE slots SET enrolled_count = enrolled_count + 1 WHERE id = ?",
       [slot_id]
     )
 
-    // all ok — commit karo
     await conn.commit()
 
     return sendSuccess(res, 201, "Enrollment successful", {
@@ -71,13 +66,11 @@ exports.enroll = async (req, res, next) => {
     })
 
   } catch (err) {
-    // if wrong— rollback karo
-    // console.error("Enrollment error details:", err) 
     await conn.rollback()
     next(err)
 
   } finally {
-    conn.release()  // 👈 connection pool ko wapas do
+    conn.release()
   }
 }
 
