@@ -6,7 +6,7 @@
 
 **Digitizing gym registration, slot booking, and enrollment for NIT Srinagar students**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen?style=for-the-badge)](https://nitsri-gym-portal-jx2bo7l90-nsneha16s-projects.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen?style=for-the-badge)](nsneha16-nitsri-gym-portal.vercel.app)
 [![Backend](https://img.shields.io/badge/Backend-Render-purple?style=for-the-badge)](https://nitsri-gym-backend.onrender.com)
 [![Database](https://img.shields.io/badge/Database-Aiven%20MySQL-blue?style=for-the-badge)](https://aiven.io)
 [![CI](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml/badge.svg)](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml)
