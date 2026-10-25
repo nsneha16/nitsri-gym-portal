@@ -6,13 +6,13 @@
 
 **Digitizing gym registration, slot booking, and enrollment for NIT Srinagar students**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen?style=for-the-badge)](nsneha16-nitsri-gym-portal.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-brightgreen?style=for-the-badge)](https://nsneha16-nitsri-gym-portal.vercel.app/)
 [![Backend](https://img.shields.io/badge/Backend-Render-purple?style=for-the-badge)](https://nitsri-gym-backend.onrender.com)
 [![Database](https://img.shields.io/badge/Database-Aiven%20MySQL-blue?style=for-the-badge)](https://aiven.io)
 [![CI](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml/badge.svg)](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml)
 ---
 
-![NITSRI Gym Portal](nsneha16-nitsri-gym-portal.vercel.app)
+![NITSRI Gym Portal](https://nsneha16-nitsri-gym-portal.vercel.app/)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?style=flat-square&logo=node.js)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=flat-square&logo=mysql)
