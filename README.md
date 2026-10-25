@@ -12,7 +12,7 @@
 [![CI](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml/badge.svg)](https://github.com/nsneha16/nitsri-gym-portal/actions/workflows/ci.yml)
 ---
 
-![NITSRI Gym Portal](https://img.shields.io/badge/Status-Live%20%F0%9F%9F%A2-success?style=flat-square)
+![NITSRI Gym Portal](nsneha16-nitsri-gym-portal.vercel.app)
 ![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?style=flat-square&logo=node.js)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=flat-square&logo=mysql)
