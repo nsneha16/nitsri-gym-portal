@@ -94,7 +94,7 @@ describe("agent loop (scripted LLM, real tools, real DB)", () => {
   })
 
   it("agent tools are read-only (no tool can write or message anyone)", () => {
-    expect(tools.map(t => t.name).sort()).toEqual(["at_risk_students", "expiring_enrollments", "slots_by_fill"])
+    expect(tools.map(t => t.name).sort()).toEqual(["at_risk_students", "expiring_enrollments", "slots_by_fill", "slot_students"])
   })
 })
 
