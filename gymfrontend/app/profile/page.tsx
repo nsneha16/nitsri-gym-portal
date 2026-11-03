@@ -178,7 +178,7 @@ export default function ProfilePage() {
                 <div className="relative">
                   <BookOpen className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="e.g. CSE, ECE, ME, CE"
+                    placeholder="e.g. CSE, ECE, ME, CHE"
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
                     className="pl-10"

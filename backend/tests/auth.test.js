@@ -3,18 +3,40 @@ const request = require("supertest")
 const app = require("../src/app")
 const db = require("../src/config/db")
 
+const bcrypt = require("bcrypt")
+const TEST_EMAIL = "authtest@demo.invalid"
+
 describe("Auth API", () => {
+  // test apna user khud banata hai - kisi real/seed account pe depend nahi karta
+  beforeAll(async () => {
+    await db.query("DELETE FROM users WHERE email = ?", [TEST_EMAIL])
+    await db.query(
+      "INSERT INTO users (name, email, password, role) VALUES ('Auth Test', ?, ?, 'student')",
+      [TEST_EMAIL, bcrypt.hashSync("right-password", 10)]
+    )
+  })
+
   afterAll(async () => {
+    await db.query("DELETE FROM users WHERE email = ?", [TEST_EMAIL])
     await db.end()  // connection pool band karo, warna Jest hang hoga
   })
 
   it("should reject login with wrong password", async () => {
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "gymadmin@nitsri.ac.in", password: "wrongpassword" })
+      .send({ email: TEST_EMAIL, password: "wrongpassword" })
 
     expect(res.statusCode).toBe(401)
     expect(res.body.success).toBe(false)
+  })
+
+  it("should log in with the correct password", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: TEST_EMAIL, password: "right-password" })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.body.success).toBe(true)
   })
 
   it("should reject login for non-existent email", async () => {

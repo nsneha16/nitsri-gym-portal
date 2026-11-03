@@ -8,5 +8,6 @@ backend/.env.production
 gymfrontend/node_modules
 gymfrontend/.env
 gymfrontend/.env.local
+gym_fake_data
 
 ca.pem
