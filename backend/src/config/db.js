@@ -1,4 +1,5 @@
 // db.js — use promise wrapper
+require("dns").setDefaultResultOrder("ipv4first")
 const mysql = require('mysql2/promise');
 
 const db = mysql.createPool({
@@ -9,6 +10,7 @@ const db = mysql.createPool({
   port: process.env.DB_PORT,
   waitForConnections: true,
   connectionLimit: 10,   // connection pool, not single connection
+    connectTimeout: 20000,
   ssl: {                             
     rejectUnauthorized: false 
   }
@@ -21,9 +23,10 @@ const db = mysql.createPool({
     console.log("Database connected");
     connection.release();
   } catch (err) {
-    console.log("DB connection failed:", err.message);
+    // console.log("DB connection failed:", err.message);
     // console.log(process.env.DB_USER);
     // console.log(process.env.DB_PASSWORD);
+        console.log("DB connection failed:", err.message, err.code, err.address, err.port)
   }
 })();
 
