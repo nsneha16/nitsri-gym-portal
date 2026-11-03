@@ -30,4 +30,14 @@ const db = mysql.createPool({
   }
 })();
 
+const dns = require("dns"), net = require("net")
+dns.lookup(process.env.DB_HOST, { all: true }, (e, a) => {
+  console.log("DNS:", e ? e.code : JSON.stringify(a))
+  ;(a || []).forEach(({ address }) => {
+    const s = net.connect({ host: address, port: Number(process.env.DB_PORT), timeout: 8000 })
+    s.on("connect", () => { console.log("TCP ok", address); s.destroy() })
+    s.on("timeout", () => { console.log("TCP timeout", address); s.destroy() })
+    s.on("error", er => console.log("TCP error", address, er.code))
+  })
+})
 module.exports = db;
